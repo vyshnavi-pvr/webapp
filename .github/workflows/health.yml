@@ -48,7 +48,8 @@ jobs:
 
     - name: List PostgreSQL databases
       run: |
-        psql -h localhost -U postgres -l
+        sudo -u postgres psql -l
+
         
     - name: Run FastAPI application
       run: python main.py
