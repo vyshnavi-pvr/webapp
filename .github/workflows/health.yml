@@ -45,8 +45,15 @@ jobs:
     - name: Install pip dependencies
       run: |
         pip install -r requirements.txt
+
+    - name: List PostgreSQL databases
+      run: |
+        sudo -u postgres psql -l
+
+        
     - name: Run FastAPI application
-      run: python main.py
+      run: python main.py & 
+
 
     - name: Wait for FastAPI to start
       run: |
