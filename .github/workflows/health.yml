@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+   
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install PostgreSQL
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql postgresql-contrib
+    - name: Start PostgreSQL service
+      run: sudo service postgresql start
+
+    - name: Wait for PostgreSQL to start
+      run: |
+         timeout 5 bash -c '
+           until sudo -u postgres psql -c "\\l" &>/dev/null; do
+            sleep 1
+          done
+         '
+    - name: Check PostgreSQL status
+      run: sudo service postgresql status
+
+      
+    - name: Create PostgreSQL user and database
+      run: |
+        echo "ALTER USER postgres WITH ENCRYPTED PASSWORD 'hello';" | sudo -u postgres psql
+  
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'  # Replace with your desired Python version
+
+    - name: Install pip dependencies
+      run: |
+        pip install -r requirements.txt
+    - name: Run FastAPI application
+      run: python main.py
+
+    - name: Wait for FastAPI to start
+      run: |
+        python test.py
