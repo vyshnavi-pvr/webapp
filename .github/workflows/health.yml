@@ -52,7 +52,8 @@ jobs:
 
         
     - name: Run FastAPI application
-      run: python main.py
+      run: python main.py & 
+
 
     - name: Wait for FastAPI to start
       run: |
