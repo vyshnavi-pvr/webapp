@@ -1,22 +1,26 @@
 #!/bin/bash
 
-sudo apt update
-sudo apt upgrade
+sudo apt update -y
+sudo apt upgrade -y
 
-sudo apt install software-properties-common
+sudo apt install software-properties-common -y
 
-sudo apt install python3.11-venv
+sudo apt install python3.11-venv  -y
 python3 -m venv cs_env 
-source cs_env/bin/activate
+. cs_env/bin/activate
 
-sudo apt install postgresql postgresql-contrib
+sudo apt install postgresql postgresql-contrib  -y
 
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
 sudo -u postgres psql -c "CREATE ROLE myuser WITH LOGIN PASSWORD 'hello' SUPERUSER;"
 
-sudo apt install unzip
+sudo apt install unzip  -y
 
 cd ~/ && unzip webapp.zip -d webapp
-pip install -r requirements.txt
+cd ~/webapp && pip install -r requirements.txt
+
+sudo -u postgres psql -l
+
+python main.py
