@@ -23,4 +23,6 @@ cd ~/webapp && pip install -r requirements.txt
 
 sudo -u postgres psql -l
 
-python main.py
+python main.py &
+
+echo " DB user myuser pw hello and app runs on 8001 port"
