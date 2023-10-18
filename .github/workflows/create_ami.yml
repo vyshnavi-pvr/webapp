@@ -71,11 +71,10 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
         aws-region: us-east-1
 
+    - name: Packer Init
+      run: packer init .
+
     - name: Build AMI
       working-directory: ${{github.workspace}}
       run: zip -r webapp.zip ./* && 
            packer build ami.aws-debian.pkr.hcl
-
-
-
-
