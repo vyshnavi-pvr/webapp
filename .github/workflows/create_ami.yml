@@ -1,0 +1,90 @@
+name: Create AMI
+#workflow will run after the pull request is merged
+on:
+  push:
+    branches:
+    - main
+jobs:
+  packer_build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install PostgreSQL
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql postgresql-contrib
+    - name: Start PostgreSQL service
+      run: sudo service postgresql start
+
+    - name: Wait for PostgreSQL to start
+      run: |
+         timeout 5 bash -c '
+           until sudo -u postgres psql -c "\\l" &>/dev/null; do
+            sleep 1
+          done
+         '
+    - name: Check PostgreSQL status
+      run: sudo service postgresql status
+
+      
+    - name: Create PostgreSQL user and database
+      run: |
+        echo "ALTER USER postgres WITH ENCRYPTED PASSWORD 'hello';" | sudo -u postgres psql
+  
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'  # Replace with your desired Python version
+
+    - name: Install pip dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: List PostgreSQL databases
+      run: |
+        sudo -u postgres psql -l
+
+        
+    - name: Run FastAPI application
+      run: python main.py & 
+
+
+    - name: Wait for FastAPI to start
+      run: |
+        python test.py
+
+    - name: Python dependencies installed
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.9
+
+    - name: Debug AWS Secrets
+      run: |
+        echo "GitHub Workspace: ${{ github.workspace }}"
+        aws configure list
+        aws sts get-caller-identity
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+
+    - name: Configuring AWS Credentials for dev
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+        aws-region: us-east-1
+
+    - name: Build AMI
+      working-directory: ${{github.workspace}}
+      run: zip -r webapp.zip ./* && 
+           packer build ami.aws-debian.pkr.hcl
+
+
+
+
