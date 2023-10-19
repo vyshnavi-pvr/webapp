@@ -80,6 +80,6 @@ jobs:
            packer build -var "aws_region=${{secrets.AWS_REGION}}" \
                        -var "source_ami=${{secrets.SOURCE_AMI}}" \
                        -var "ssh_username=${{secrets.SSH_USER}}" \
-                       -var "ssh_username=${{secrets.ami_user}}" \
+                       -var "ami_user=${{secrets.AMI_USER}}" \
                        ami.aws-debian.pkr.hcl
                        
