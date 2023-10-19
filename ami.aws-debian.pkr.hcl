@@ -29,7 +29,7 @@ variable "subnet_id" {
 
 variable "ami_user" {
   type    = string
-  default = "831891561989"
+  default = "051986808830"
 }
 
 source "amazon-ebs" "debian_webapp_ami" {
