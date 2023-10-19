@@ -32,13 +32,18 @@ variable "ami_user" {
   default = "051986808830"
 }
 
+variable "ami_region" {
+  type    = string
+  default = "us-west-1"
+}
+
 source "amazon-ebs" "debian_webapp_ami" {
   ami_name        = "cye6225_${formatdate("YYYY_MM_DD_hh_mm_ss", timestamp())}"
   ami_description = "csye6225 AMI"
   instance_type   = "t2.micro"
   region          = "${var.aws_region}"
   ami_regions = [
-    "us-east-1",
+    "us-east-1", "${var.ami_region}"
   ]
   ami_users = ["${var.ami_user}"]
 
