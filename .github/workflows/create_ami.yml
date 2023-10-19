@@ -76,5 +76,5 @@ jobs:
 
     - name: Build AMI
       working-directory: ${{github.workspace}}
-      run: zip -r webapp.zip ./* && packer build -var "aws_region=${{secrets.AWS_REGION}}" -var "source_ami=${{secrets.SOURCE_AMI}}" -var "ssh_username=${{secrets.SSH_USER}}" -var "ami_user=${{secrets.AMI_USER}}" ami.aws-debian.pkr.hcl
+      run: zip -r webapp.zip ./* && packer build -var "aws_region=${{secrets.AWS_REGION}}" -var "source_ami=${{secrets.SOURCE_AMI}}" -var "ami_region=${{secrets.AMI_REGION}}" -var "ssh_username=${{secrets.SSH_USER}}" -var "ami_user=${{secrets.AMI_USER}}" ami.aws-debian.pkr.hcl
                        
