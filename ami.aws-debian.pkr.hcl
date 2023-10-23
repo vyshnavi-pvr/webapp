@@ -10,7 +10,7 @@ packer {
 variable "aws_region" {
   type    = string
   default = "us-east-1"
-
+}
 
 variable "source_ami" {
   type    = string
@@ -45,7 +45,7 @@ source "amazon-ebs" "debian_webapp_ami" {
   ami_regions = [
     "us-east-1", "${var.ami_region}"
   ]
-  ami_users = ["${var.ami_user}"]
+  ami_users = ["${var.ami_user}"
 
   aws_polling {
     delay_seconds = 30
