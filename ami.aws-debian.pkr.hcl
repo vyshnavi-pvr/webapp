@@ -8,9 +8,9 @@ packer {
 }
 
 variable "aws_region" {
-type    = string
+  type    = string
   default = "us-east-1"
-}
+
 
 variable "source_ami" {
   type    = string
