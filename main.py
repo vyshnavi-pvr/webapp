@@ -15,6 +15,7 @@ from sqlalchemy import and_,create_engine
 from passlib.context import CryptContext
 from database import DatabaseManager
 import csv
+import os
 
 class Hasher():
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -231,12 +232,22 @@ class FastAPIApp:
 
     def check_postgres_health(self):
         try:
-            conn = psycopg2.connect(
-                dbname=self.database_manager.config.get('DatabaseSection', 'database.dbname'),
-                user=self.database_manager.config.get('DatabaseSection', 'database.user'),
-                password=self.database_manager.config.get('DatabaseSection', 'database.password'),
-                host="localhost",
-                port="5432"
+            if os.getenv("Create AMI") == "true":
+                conn = psycopg2.connect(
+                    dbname=self.database_manager.config.get('DatabaseSection', 'database.dbname'),
+                    port=self.database_manager.config.get('DatabaseSection', 'database.port'),
+                    user=self.database_manager.config.get('DatabaseSection', 'database.user'),
+                    password=self.database_manager.config.get('DatabaseSection', 'database.password'),
+                    host=self.database_manager.config.get('DatabaseSection', 'database.host')
+                )
+            else:
+                conn = psycopg2.connect(
+                    dbname=self.database_manager.config.get('DatabaseSection', 'database.dbname'),
+                    port=self.database_manager.config.get('DatabaseSection', 'database.port'),
+                    user=self.database_manager.client.get_secret_value(SecretId="db_master_user")['SecretString'],
+                    password=self.database_manager.client.get_secret_value(SecretId="db_master_pass")['SecretString'],
+                    host=self.database_manager.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
+                
             )
             conn.close()
             return True

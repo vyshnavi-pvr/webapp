@@ -34,7 +34,7 @@ variable "ami_user" {
 
 variable "ami_region" {
   type    = string
-  default = "us-west-1"
+  default = "us-east-1"
 }
 
 source "amazon-ebs" "debian_webapp_ami" {
