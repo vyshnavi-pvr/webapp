@@ -17,7 +17,7 @@ class DatabaseManager:
         if os.getenv("CreateAMI") == "true" or os.getenv("CI") == "true":
             username = self.config.get('DatabaseSection', 'database.user')
             pwd = self.config.get('DatabaseSection', 'database.password')
-            endpoint= self.config.get('DatabaseSection', 'database.endpoint')
+            endpoint= self.config.get('DatabaseSection', 'database.host')
         else:
             self.session = boto3.session.Session()
             client = self.session.client(
