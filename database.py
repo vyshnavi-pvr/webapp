@@ -9,7 +9,7 @@ import boto3
 
 class DatabaseManager:
     def __init__(self, config_path='db_config.properties'):
-        script_directory = os.path.dirname(os.path.abspath(_file_))
+        script_directory = os.path.dirname(os.path.abspath(__file__))
         config_file = os.path.join(script_directory, config_path)
         self.config = configparser.ConfigParser(config_file)
         self.config.read()
