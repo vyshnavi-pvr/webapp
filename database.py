@@ -9,10 +9,10 @@ import boto3
 
 class DatabaseManager:
     def __init__(self, config_path='db_config.properties'):
+        self.config = configparser.ConfigParser()
         script_directory = os.path.dirname(os.path.abspath(__file__))
         config_file = os.path.join(script_directory, config_path)
-        self.config = configparser.ConfigParser(config_file)
-        self.config.read()
+        self.config.read(config_file)
         
         if os.getenv("Create AMI") == "true":
             username = self.config.get('DatabaseSection', 'database.user')
