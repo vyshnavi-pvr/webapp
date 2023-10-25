@@ -7,10 +7,13 @@ Type=simple
 User=csye6225
 Group=csye6225g
 WorkingDirectory=/opt/csye6225/webapp
-ExecStart=/opt/csye6225/cs_env/bin/python /opt/csye6225/webapp/main.py
+ExecStart=/home/admin/cs_env/bin/python /opt/csye6225/webapp/main.py
 Restart=always
 StandardError= syslog
 SyslogIdentifier= csye6225
         
 [Install]
 WantedBy=multi-user.target
+
+
+        

@@ -32,6 +32,11 @@ class DatabaseManager:
         port = self.config.get('DatabaseSection', 'database.port')
         self.db_uri = f'postgresql://{username}:{pwd}@{endpoint}:{port}/{db_name}'
 
+        self._setup_database()
+        self.engine = create_engine(self.db_uri)
+        self.SessionLocal = sessionmaker(bind=self.engine)
+        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
     def _setup_database(self):
         if not database_exists(self.db_uri):
             create_database(self.db_uri)
