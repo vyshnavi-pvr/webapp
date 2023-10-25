@@ -3,24 +3,35 @@
 sudo apt update -y
 sudo apt upgrade -y
 
+sudo groupadd csye6225g
+sudo useradd -s /bin/false -g csye6225g -d /opt/csye6225 -m csye6225
+
 sudo apt install software-properties-common -y
-
+sudo apt install telnet -y
 sudo apt install python3.11-venv  -y
-python3 -m venv cs_env 
-. cs_env/bin/activate
-
-sudo apt install postgresql postgresql-contrib  -y
-
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-
-sudo -u postgres psql -c "CREATE ROLE myuser WITH LOGIN PASSWORD 'hello' SUPERUSER;"
-
 sudo apt install unzip  -y
 
-cd ~/ && unzip webapp.zip -d webapp
-cd ~/webapp && pip install -r requirements.txt
+sudo unzip ~/webapp.zip -d /opt/csye6225/webapp
 
-sudo -u postgres psql -l
+python3 -m venv /home/admin/cs_env
 
-echo " DB user myuser pw hello and app runs on 8001 port"
+ . /home/admin/cs_env/bin/activate
+#rm -rf ~/webapp.zip
+cd /opt/csye6225/webapp
+
+pip install -r requirements.txt
+
+sudo chown -R csye6225:csye6225g /opt/csye6225/webapp/
+#chown -R csye6225:csye6225g /opt/csye6225/cs_env/
+
+sudo cp /opt/csye6225/webapp/csye6225.service /etc/systemd/system/csye6225.service
+
+sudo chmod 644 /etc/systemd/system/csye6225.service
+sudo systemctl daemon-reload
+        
+sudo systemctl enable csye6225
+sudo systemctl start csye6225
+sudo systemctl status csye6225
+
+
+echo " End of AMI creation script"

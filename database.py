@@ -4,19 +4,33 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy_utils import database_exists, create_database
 import configparser
 from passlib.context import CryptContext
+import os
+import boto3
 
 class DatabaseManager:
     def __init__(self, config_path='db_config.properties'):
-        self.config = configparser.ConfigParser()
-        self.config.read(config_path)
-        username = self.config.get('DatabaseSection', 'database.user')
-        pwd = self.config.get('DatabaseSection', 'database.password')
+        script_directory = os.path.dirname(os.path.abspath(_file_))
+        config_file = os.path.join(script_directory, config_path)
+        self.config = configparser.ConfigParser(config_file)
+        self.config.read()
+        
+        if os.getenv("Create AMI") == "true":
+            username = self.config.get('DatabaseSection', 'database.user')
+            pwd = self.config.get('DatabaseSection', 'database.password')
+            endpoint= self.config.get('DatabaseSection', 'database.endpoint')
+        else:
+            self.session = boto3.session.Session()
+            client = self.session.client(
+                service_name='secretsmanager',
+                region_name="us-east-1"
+            )
+            username = client.get_secret_value(SecretId="db_master_user")['SecretString']
+            pwd = client.get_secret_value(SecretId="db_master_pass")['SecretString']
+            endpoint= client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
+
         db_name = self.config.get('DatabaseSection', 'database.dbname')
-        self.db_uri = f'postgresql://{username}:{pwd}@localhost:5432/{db_name}'
-        self._setup_database()
-        self.engine = create_engine(self.db_uri)
-        self.SessionLocal = sessionmaker(bind=self.engine)
-        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        port = self.config.get('DatabaseSection', 'database.port')
+        self.db_uri = f'postgresql://{username}:{pwd}@{endpoint}:{port}/{db_name}'
 
     def _setup_database(self):
         if not database_exists(self.db_uri):
