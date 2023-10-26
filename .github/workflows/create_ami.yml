@@ -8,6 +8,10 @@ jobs:
   packer_build:
 
     runs-on: ubuntu-latest
+
+    env:
+      CreateAMI: "true"
+      
     permissions:
       id-token: write
       contents: read
