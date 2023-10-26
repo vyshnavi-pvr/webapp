@@ -18,6 +18,7 @@ class DatabaseManager:
             username = self.config.get('DatabaseSection', 'database.user')
             pwd = self.config.get('DatabaseSection', 'database.password')
             endpoint= self.config.get('DatabaseSection', 'database.host')
+            print("using config: {pwd} {username} {endpoint}")
         else:
             self.session = boto3.session.Session()
             client = self.session.client(
@@ -31,7 +32,7 @@ class DatabaseManager:
         db_name = self.config.get('DatabaseSection', 'database.dbname')
         port = self.config.get('DatabaseSection', 'database.port')
         self.db_uri = f'postgresql://{username}:{pwd}@{endpoint}:{port}/{db_name}'
-
+        print(self.db_uri)
         self._setup_database()
         self.engine = create_engine(self.db_uri)
         self.SessionLocal = sessionmaker(bind=self.engine)
