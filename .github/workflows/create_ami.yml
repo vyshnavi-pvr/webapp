@@ -39,7 +39,7 @@ jobs:
       
     - name: Create PostgreSQL user and database
       run: |
-        echo "ALTER USER myuser WITH ENCRYPTED PASSWORD 'hello';" | sudo -u postgres psql
+        echo "ALTER USER postgres WITH ENCRYPTED PASSWORD 'hello';" | sudo -u postgres psql
   
     - name: Install Python
       uses: actions/setup-python@v2

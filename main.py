@@ -1,10 +1,9 @@
 import configparser
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy_utils import database_exists, create_database
 import models
 import schemas
 import crud
+import logging
 from passlib.context import CryptContext
 from typing import Annotated, List
 from fastapi import Depends, FastAPI, HTTPException, Request, responses,status
@@ -16,6 +15,9 @@ from passlib.context import CryptContext
 from database import DatabaseManager
 import csv
 import os
+import statsd
+
+stats = statsd.StatsClient('0.0.0.0', 8125,prefix="public")
 
 class Hasher():
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -47,10 +49,16 @@ class FastAPIApp:
 
         @self.app.get("/healthz")
         async def health_check():
+            statsd.incr('health')
+            logging.info("Database connection health check")
+            foo_timer = statsd.timer('health_timer')
+            foo_timer.start()
             if self.check_postgres_health():
+                foo_timer.stop()
                 return responses.Response(status_code=200, headers={"cache-control": "no-cache"})
 
             else:
+                foo_timer.stop()
                 return responses.Response(status_code=503, headers={"cache-control": "no-cache"})
 
 
@@ -246,7 +254,7 @@ class FastAPIApp:
                     port=self.database_manager.config.get('DatabaseSection', 'database.port'),
                     user=self.database_manager.client.get_secret_value(SecretId="db_master_user")['SecretString'],
                     password=self.database_manager.client.get_secret_value(SecretId="db_master_pass")['SecretString'],
-                    host=self.database_manager.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
+                    host=self.database_manager.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString'].split(":")[0]
                 
             )
             conn.close()
