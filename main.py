@@ -17,7 +17,31 @@ import csv
 import os
 import statsd
 
-stats = statsd.StatsClient('0.0.0.0', 8125,prefix="public")
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="{asctime} {message}",
+    style='{',
+    filename='csye6225.log',
+    filemode='w'
+
+)
+
+logging.info('application up and running')
+
+stats = statsd.StatsClient('127.0.0.1', 8125,prefix="public")
+
+metric_names = {
+    '/healthz': 'HealthCheckHits',
+    '/v1/assignments': 'AssignmentsAPIHits',
+    # Add more custom metrics for other APIs as needed
+}
+
+# Specify the custom metric namespace and dimensions
+namespace = 'CSYE6225assignment'
+dimensions_base = [{'Name': 'APIName', 'Value': ''}]
+
 
 class Hasher():
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -30,7 +54,7 @@ class Hasher():
     def get_password_hash( password):
         return Hasher.pwd_context.hash(password)
 
-# DatabaseManager Class
+
 
 # FastAPIApp Class
 class FastAPIApp:
@@ -49,16 +73,16 @@ class FastAPIApp:
 
         @self.app.get("/healthz")
         async def health_check():
-            statsd.incr('health')
-            logging.info("Database connection health check")
-            foo_timer = statsd.timer('health_timer')
-            foo_timer.start()
+            stats.incr('health')
+            logging.info("Database connection health check pass")
+            health_timer = stats.timer('health_timer')
+            health_timer.start()
             if self.check_postgres_health():
-                foo_timer.stop()
+                health_timer.stop()
                 return responses.Response(status_code=200, headers={"cache-control": "no-cache"})
 
             else:
-                foo_timer.stop()
+                health_timer.stop()
                 return responses.Response(status_code=503, headers={"cache-control": "no-cache"})
 
 
@@ -68,14 +92,19 @@ class FastAPIApp:
                 current_user: schemas.User = Depends(self.get_current_user)
         ):
             try:
-               
+                stats.incr('getall')
+                logging.info("getting all assignments of ",current_user.email)
+                getall_timer = stats.timer('getall_timer')
+                getall_timer.start()
                 crud.db_status(self.database_manager)
 
                 
                 if current_user is None:
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
-                
+                getall_timer.stop()
+
+                logging.info("getting all assignments of authenticated user with email: ",current_user.email)
 
                 return crud.get_assignments(db, current_user)
 
@@ -210,9 +239,6 @@ class FastAPIApp:
 
 
 
-                # Add more routes similarly
-
-
     @staticmethod
     def get_password_hash(self, password):
         return Hasher.pwd_context.hash(password)
@@ -254,7 +280,7 @@ class FastAPIApp:
                     port=self.database_manager.config.get('DatabaseSection', 'database.port'),
                     user=self.database_manager.client.get_secret_value(SecretId="db_master_user")['SecretString'],
                     password=self.database_manager.client.get_secret_value(SecretId="db_master_pass")['SecretString'],
-                    host=self.database_manager.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString'].split(":")[0]
+                    host=self.database_manager.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
                 
             )
             conn.close()
@@ -302,8 +328,6 @@ class FastAPIApp:
 
         import uvicorn
         uvicorn.run(self.app, host="0.0.0.0", port=8001)
-
-# Utility functions and classes (e.g., Hasher, verify_user, create_user) remain unchanged.
 
 if __name__ == "__main__":
     app_instance = FastAPIApp()

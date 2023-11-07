@@ -4,15 +4,9 @@ from datetime import datetime
 from typing import List
 from pydantic import BaseModel,EmailStr, Field, validator
 
-
-
-
-
 class UserBase(BaseModel):
     email: str
     
-
-
 class UserCreate(UserBase):
 
     first_name: str
@@ -20,19 +14,14 @@ class UserCreate(UserBase):
     # email: EmailStr
     password: str
 
-
 class User(UserBase):
 
     user_id: str
     account_created: datetime
     account_updated: datetime
     
-    
-
     class Config:
         orm_mode = True
-
-
 
 class AssignmentBase(BaseModel):
     
@@ -52,9 +41,7 @@ class AssignmentCreate(AssignmentBase):
     assignment_id: str
     assignment_created: datetime
     assignment_updated: datetime
-    
-
-    
+     
 class Assignment(AssignmentBase):
     u_id: str
     

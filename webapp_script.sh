@@ -14,12 +14,17 @@ sudo apt install unzip  -y
 sudo wget https://amazoncloudwatch-agent.s3.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb 
 sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
 
-sudo apt-get install collectd -y
+sudo apt-get --assume-yes install nodejs npm
+
+sudo npm install statsd
+sudo npm install aws-cloudwatch-statsd-backend
+
+
 sudo unzip ~/webapp.zip -d /opt/csye6225/webapp
 
 python3 -m venv /home/admin/cs_env
 
- . /home/admin/cs_env/bin/activate
+. /home/admin/cs_env/bin/activate
 #rm -rf ~/webapp.zip
 cd /opt/csye6225/webapp
 
@@ -40,6 +45,9 @@ sudo systemctl status csye6225
 
 
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/cloudwatch-config.json -s
+sudo systemctl enable amazon-cloudwatch-agent
+sudo systemctl start amazon-cloudwatch-agent
+sudo systemctl restart amazon-cloudwatch-agent
 
 
 echo " End of AMI creation script"
