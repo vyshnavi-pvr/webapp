@@ -27,7 +27,7 @@ class DatabaseManager:
             )
             username = client.get_secret_value(SecretId="db_master_user")['SecretString']
             pwd = client.get_secret_value(SecretId="db_master_pass")['SecretString']
-            endpoint= client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString'].split(":")[0]
+            endpoint= client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
 
         db_name = self.config.get('DatabaseSection', 'database.dbname')
         port = self.config.get('DatabaseSection', 'database.port')
@@ -44,7 +44,7 @@ class DatabaseManager:
 
         engine_temp = create_engine(self.db_uri)
 
-        schema_name = "webappdb"  # adjust this to your desired schema name if different
+        schema_name = "webappdb"  
         with engine_temp.connect() as connection:
             connection.execute(CreateSchema(schema_name, if_not_exists=True))
             connection.commit()

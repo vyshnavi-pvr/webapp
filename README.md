@@ -1,5 +1,4 @@
 # webapp
 
-# Steps to follow
 
-AMI get created on GitHub Actions .
+AMI gets created on GitHub Actions and available in dev and demo accounts on AWS.

@@ -82,20 +82,4 @@ build {
     ]
   }
 
-  // provisioner "shell" {
-  //   environment_vars = [
-  //     "DEBIAN_FRONTEND=noninteractive",
-  //     "CHECKPOINT_DISABLE=1"
-  //   ]
-  //   inline = [
-  //     "sudo apt update -y",
-  //     "sudo apt upgrade -y",
-  //     "sudo apt install software-properties-common -y",
-  //     "sudo apt install python3.11-venv -y",
-  //     "python3 -m venv cs_env",
-  //     ". cs_env/bin/activate",
-  //     "pip install -r requirements.txt"
-  //     "sudo apt install postgresql postgresql-contrib -y"
-  //   ]
-  // }
 }

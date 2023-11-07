@@ -9,8 +9,7 @@ Group=csye6225g
 WorkingDirectory=/opt/csye6225/webapp
 ExecStart=/home/admin/cs_env/bin/python /opt/csye6225/webapp/main.py
 Restart=always
-StandardOutput= file:/opt/csye6225/webapp/logs/main.log
-StandardError= file:/opt/csye6225/webapp/logs/main.log
+StandardError= syslog
 SyslogIdentifier= csye6225
         
 [Install]
