@@ -18,30 +18,7 @@ import os
 import statsd
 
 
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="{asctime} {message}",
-    style='{',
-    filename='csye6225.log',
-    filemode='w'
-
-)
-
-logging.info('application up and running')
-
 stats = statsd.StatsClient('127.0.0.1', 8125,prefix="public")
-
-metric_names = {
-    '/healthz': 'HealthCheckHits',
-    '/v1/assignments': 'AssignmentsAPIHits',
-    # Add more custom metrics for other APIs as needed
-}
-
-# Specify the custom metric namespace and dimensions
-namespace = 'CSYE6225assignment'
-dimensions_base = [{'Name': 'APIName', 'Value': ''}]
-
 
 class Hasher():
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -62,6 +39,12 @@ class FastAPIApp:
         self.app = FastAPI()
         self.database_manager = DatabaseManager()
         self.security = HTTPBasic()
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(logging.INFO)
+        handler = logging.FileHandler('csye6225.log')
+        handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+        self.log.addHandler(handler)
+        self.log.info("Initialized the application")
         self.add_routes()
         models.Base.metadata.create_all(bind=self.database_manager.engine)
 
@@ -74,14 +57,15 @@ class FastAPIApp:
         @self.app.get("/healthz")
         async def health_check():
             stats.incr('health')
-            logging.info("Database connection health check pass")
             health_timer = stats.timer('health_timer')
             health_timer.start()
             if self.check_postgres_health():
+                self.log.info("Database connection health check pass")
                 health_timer.stop()
                 return responses.Response(status_code=200, headers={"cache-control": "no-cache"})
 
             else:
+                self.log.info("Database connection health check failed")
                 health_timer.stop()
                 return responses.Response(status_code=503, headers={"cache-control": "no-cache"})
 
@@ -93,20 +77,20 @@ class FastAPIApp:
         ):
             try:
                 stats.incr('getall')
-                logging.info("getting all assignments of ",current_user.email)
+                self.log.info("getting all assignments of ",current_user.email)
                 getall_timer = stats.timer('getall_timer')
                 getall_timer.start()
                 crud.db_status(self.database_manager)
 
-                
                 if current_user is None:
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 getall_timer.stop()
 
-                logging.info("getting all assignments of authenticated user with email: ",current_user.email)
-
-                return crud.get_assignments(db, current_user)
+                self.log.info("getting all assignments of authenticated user with email: ",current_user.email)
+                msg= crud.get_assignments(db, current_user)
+                self.log.info(msg)
+                return msg
 
             except HTTPException as exc:
                 raise exc  
@@ -120,6 +104,7 @@ class FastAPIApp:
                 db: Session = Depends(self.database_manager.get_db),
                 current_user: schemas.User = Depends(self.get_current_user)):
             try:
+                stats.incr('get_assignment')
                 # Check if the user is authenticated
                 if current_user is None:
                     raise HTTPException(status_code=401, detail="Authentication failed")
@@ -129,6 +114,8 @@ class FastAPIApp:
                 # Check if there are user assignments
                 if not user_assignments:
                     raise HTTPException(status_code=403, detail="No user assignments found")
+
+                self.log.info(user_assignments)
 
                 return user_assignments
 
@@ -145,6 +132,7 @@ class FastAPIApp:
             current_user: schemas.User = Depends(self.get_current_user)         
         ):
             try:
+                stats.incr('create_assignment')
                 
                 if current_user is None:
                     raise HTTPException(status_code=401, detail="Authentication failed")
@@ -161,6 +149,7 @@ class FastAPIApp:
 
                 
                 created_assignment = crud.create_user_assignment(db, assignment, current_user.user_id)
+                self.log.info(created_assignment)
 
                 return created_assignment
 
@@ -178,12 +167,14 @@ class FastAPIApp:
             current_user: schemas.User = Depends(self.get_current_user)
         ):
             try:
+                stats.incr('update_assignment')
                 # Check if the user is authenticated
                 if current_user is None:
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 # Check if the database is running
                 crud.db_status(self.database_manager)
+                self.log.info(f'Updating assignment with id : {assignment_id} by {current_user.email}')
                 assignment_to_update = crud.get_user_assignment_for_update(db, assignment_id, current_user.user_id)
 
 
@@ -194,6 +185,7 @@ class FastAPIApp:
                 if assignment_to_update is None:
                     raise HTTPException(status_code=401, detail="Assignment not found")
                 updated_assignment = crud.update_assignment(db, assignment_id, assignment_update)
+                self.log.info(updated_assignment)
 
                 return updated_assignment
         
@@ -212,6 +204,7 @@ class FastAPIApp:
             current_user: schemas.User = Depends(self.get_current_user)
         ):
             try:
+                stats.incr('delete_assignment')
                 # Check if the user is authenticated
                 if current_user is None:
                     raise HTTPException(status_code=401, detail="Authentication failed")
@@ -221,6 +214,7 @@ class FastAPIApp:
 
                 # Get the assignment to delete and check if it was created by the user
                 assignment_to_delete = crud.get_user_assignment_for_update(db, assignment_id, current_user.user_id)
+                self.log.info(f"Deleting assignment with id: {assignment_id}")
 
                 # Check if the assignment exists and if it was created by the user
                 if assignment_to_delete is None:
