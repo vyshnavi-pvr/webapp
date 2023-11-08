@@ -21,13 +21,14 @@ class DatabaseManager:
             print("using config: {pwd} {username} {endpoint}")
         else:
             self.session = boto3.session.Session()
-            client = self.session.client(
+            self.client = self.session.client(
                 service_name='secretsmanager',
                 region_name="us-east-1"
             )
-            username = client.get_secret_value(SecretId="db_master_user")['SecretString']
-            pwd = client.get_secret_value(SecretId="db_master_pass")['SecretString']
-            endpoint= client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
+            username = self.client.get_secret_value(SecretId="db_master_user")['SecretString']
+            pwd = self.client.get_secret_value(SecretId="db_master_pass")['SecretString']
+            endpoint= self.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
+            endpoint= endpoint.split(":")
 
         db_name = self.config.get('DatabaseSection', 'database.dbname')
         port = self.config.get('DatabaseSection', 'database.port')
@@ -48,9 +49,6 @@ class DatabaseManager:
         with engine_temp.connect() as connection:
             connection.execute(CreateSchema(schema_name, if_not_exists=True))
             connection.commit()
-
-
-
 
     def get_db(self):
         db = self.SessionLocal()
