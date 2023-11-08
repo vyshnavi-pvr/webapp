@@ -39,15 +39,13 @@ sudo cp /opt/csye6225/webapp/cloudwatch-config.json /opt/cloudwatch-config.json
 sudo chmod 644 /etc/systemd/system/csye6225.service
 sudo systemctl daemon-reload
         
-sudo systemctl enable csye6225
-sudo systemctl start csye6225
-sudo systemctl status csye6225
-
-
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/cloudwatch-config.json -s
 sudo systemctl enable amazon-cloudwatch-agent
 sudo systemctl start amazon-cloudwatch-agent
-sudo systemctl restart amazon-cloudwatch-agent
+
+sudo systemctl enable csye6225
+sudo systemctl start csye6225
+sudo systemctl status csye6225
 
 
 echo " End of AMI creation script"
