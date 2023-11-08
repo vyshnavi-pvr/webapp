@@ -14,7 +14,7 @@ class User(Base):
     __table_args__={'schema':'webappdb'}
     
 
-    user_id = Column(String(36), primary_key=True, index=True, default=str(uuid.uuid4()))
+    user_id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     first_name= Column(String(45))
     last_name= Column(String(45))
     email = Column(String(50), unique=True, index=True)
