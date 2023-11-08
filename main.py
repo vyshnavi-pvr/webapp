@@ -275,12 +275,14 @@ class FastAPIApp:
                     host=self.database_manager.config.get('DatabaseSection', 'database.host')
                 )
             else:
+                endpoint= self.database_manager.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
+                endpoint= endpoint.split(":")
                 conn = psycopg2.connect(
                     dbname=self.database_manager.config.get('DatabaseSection', 'database.dbname'),
                     port=self.database_manager.config.get('DatabaseSection', 'database.port'),
                     user=self.database_manager.client.get_secret_value(SecretId="db_master_user")['SecretString'],
                     password=self.database_manager.client.get_secret_value(SecretId="db_master_pass")['SecretString'],
-                    host=self.database_manager.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
+                    host=endpoint
                 
             )
             conn.close()
