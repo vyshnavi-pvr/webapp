@@ -28,7 +28,6 @@ class DatabaseManager:
             username = self.client.get_secret_value(SecretId="db_master_user")['SecretString']
             pwd = self.client.get_secret_value(SecretId="db_master_pass")['SecretString']
             endpoint= self.client.get_secret_value(SecretId="csye2023_db_end_point")['SecretString']
-            endpoint= endpoint.split(":")
 
         db_name = self.config.get('DatabaseSection', 'database.dbname')
         port = self.config.get('DatabaseSection', 'database.port')
