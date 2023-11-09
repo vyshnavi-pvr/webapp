@@ -41,6 +41,7 @@ class FastAPIApp:
         self.security = HTTPBasic()
         self.log = logging.getLogger(__name__)
         self.log.setLevel(logging.INFO)
+        self.log.setLevel(logging.ERROR)
         handler = logging.FileHandler('csye6225.log')
         handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
         self.log.addHandler(handler)
