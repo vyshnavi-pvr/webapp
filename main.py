@@ -18,7 +18,7 @@ import os
 import statsd
 
 
-stats = statsd.StatsClient('127.0.0.1', 8125,prefix="public")
+stats = statsd.StatsClient('127.0.0.1', 8125,prefix="app")
 
 class Hasher():
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -52,6 +52,7 @@ class FastAPIApp:
 
         @self.app.on_event("startup")
         async def startup_event():
+            self.log.info("Add users to the app db")
             self.load_csv_file()
 
         @self.app.get("/healthz")
@@ -65,7 +66,7 @@ class FastAPIApp:
                 return responses.Response(status_code=200, headers={"cache-control": "no-cache"})
 
             else:
-                self.log.info("Database connection health check failed")
+                self.log.error("Database connection health check failed")
                 health_timer.stop()
                 return responses.Response(status_code=503, headers={"cache-control": "no-cache"})
 
@@ -76,27 +77,27 @@ class FastAPIApp:
                 current_user: schemas.User = Depends(self.get_current_user)
         ):
             try:
-                stats.incr('getall')
-                self.log.info("getting all assignments of ",current_user.email)
+                stats.incr('getAllAssignments')
+                self.log.info(f"Getting all assignments for user: {current_user.email}")
                 getall_timer = stats.timer('getall_timer')
                 getall_timer.start()
                 crud.db_status(self.database_manager)
 
                 if current_user is None:
+                    self.log.error("Authentication failed")
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 getall_timer.stop()
-
-                self.log.info("getting all assignments of authenticated user with email: ",current_user.email)
                 msg= crud.get_assignments(db, current_user)
-                self.log.info(msg)
+                self.log.info(f"Retrieved all assignments for authenticated user: {current_user.email}")
                 return msg
 
             except HTTPException as exc:
+                self.log.error(f"HTTPException: {exc}")
                 raise exc  
 
             except Exception as e:
-                print(e)
+                self.log.error(f"An error occurred: {str(e)}")
                 raise e
 
         @self.app.get("/v1/assignment", response_model=list[schemas.AssignmentCreate])
@@ -104,18 +105,20 @@ class FastAPIApp:
                 db: Session = Depends(self.database_manager.get_db),
                 current_user: schemas.User = Depends(self.get_current_user)):
             try:
-                stats.incr('get_assignment')
+                stats.incr('getAssignment')
                 # Check if the user is authenticated
                 if current_user is None:
+                    self.log.error("Authentication failed while getting assignment")
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 # Get assignments created by the authenticated user
                 user_assignments = crud.get_user_assignments(db, current_user.user_id)
                 # Check if there are user assignments
                 if not user_assignments:
+                    self.log.info("No user assignments found for ", current_user.email)
                     raise HTTPException(status_code=403, detail="No user assignments found")
 
-                self.log.info(user_assignments)
+                self.log.info("User Assignments retrieved for",current_user.email)
 
                 return user_assignments
 
@@ -132,9 +135,10 @@ class FastAPIApp:
             current_user: schemas.User = Depends(self.get_current_user)         
         ):
             try:
-                stats.incr('create_assignment')
+                stats.incr('createAssignment')
                 
                 if current_user is None:
+                    self.log.error("Authentication failed for ",current_user.email)
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 
@@ -142,6 +146,7 @@ class FastAPIApp:
 
                 
                 if not (1 <= assignment.points <= 10) or not (1 <= assignment.num_of_attempts <= 3):
+                    self.log.error("Invalid input data entered by ",current_user.email)
                     raise HTTPException(
                         status_code=400,
                         detail="Points must be between 1 and 10, and num_of_attempts must be between 1 and 3"
@@ -149,7 +154,7 @@ class FastAPIApp:
 
                 
                 created_assignment = crud.create_user_assignment(db, assignment, current_user.user_id)
-                self.log.info(created_assignment)
+                self.log.info("Assignment created by ", current_user.email)
 
                 return created_assignment
 
@@ -157,7 +162,7 @@ class FastAPIApp:
                 raise exc  # Re-raise HTTPExceptions to maintain the original status code and detail
 
             except Exception as e:
-                raise HTTPException(status_code=400, detail="Database is not running")
+                raise HTTPException(status_code=503, detail="Database is not running")
 
         @self.app.put("/v1/assignments/{assignment_id}", response_model=schemas.AssignmentCreate)
         async def update_assignment(
@@ -167,9 +172,10 @@ class FastAPIApp:
             current_user: schemas.User = Depends(self.get_current_user)
         ):
             try:
-                stats.incr('update_assignment')
+                stats.incr('updateAssignment')
                 # Check if the user is authenticated
                 if current_user is None:
+                    self.log.error("Authentication failed for ", current_user.email)
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 # Check if the database is running
@@ -183,9 +189,10 @@ class FastAPIApp:
 
                 # Check if the assignment exists
                 if assignment_to_update is None:
+                    self.log.error("Assignment not found")
                     raise HTTPException(status_code=401, detail="Assignment not found")
                 updated_assignment = crud.update_assignment(db, assignment_id, assignment_update)
-                self.log.info(updated_assignment)
+                self.log.info("Assignment updated")
 
                 return updated_assignment
         
@@ -204,30 +211,35 @@ class FastAPIApp:
             current_user: schemas.User = Depends(self.get_current_user)
         ):
             try:
-                stats.incr('delete_assignment')
+                stats.incr('deleteAssignment')
                 # Check if the user is authenticated
                 if current_user is None:
+                    self.log.error("Authentication failed for ",current_user.email)
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 # Check if the database is running
                 crud.db_status(self.database_manager)
-
+                self.log.info(f"Deleting assignment with id: {assignment_id}")
+                
                 # Get the assignment to delete and check if it was created by the user
                 assignment_to_delete = crud.get_user_assignment_for_update(db, assignment_id, current_user.user_id)
                 self.log.info(f"Deleting assignment with id: {assignment_id}")
 
                 # Check if the assignment exists and if it was created by the user
                 if assignment_to_delete is None:
-                    raise HTTPException(status_code=401, detail="Assignment not found")
+                    self.log.error("Assignment not found")
+                    raise HTTPException(status_code=404, detail="Assignment not found")
 
                 # Delete the assignment
                 crud.delete_assignment(db, assignment_to_delete)
+                self.log.info("Assignment deleted")
 
             except HTTPException as exc:
-                print(exc)
+                self.log.error(f"HTTPException: {exc} while deleting")
                 raise exc  # Re-raise HTTPExceptions to maintain the original status code and detail
 
             except Exception as e:
+                self.log.error(f"An error occurred: {str(e)} while deleting")
                 raise HTTPException(status_code=503, detail="Database is not running")
 
 
