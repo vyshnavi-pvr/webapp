@@ -41,7 +41,6 @@ class FastAPIApp:
         self.security = HTTPBasic()
         self.log = logging.getLogger(__name__)
         self.log.setLevel(logging.INFO)
-        self.log.setLevel(logging.ERROR)
         handler = logging.FileHandler('csye6225.log')
         handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
         self.log.addHandler(handler)
@@ -67,7 +66,7 @@ class FastAPIApp:
                 return responses.Response(status_code=200, headers={"cache-control": "no-cache"})
 
             else:
-                self.log.error("Database connection health check failed")
+                self.log.info("Database connection health check failed")
                 health_timer.stop()
                 return responses.Response(status_code=503, headers={"cache-control": "no-cache"})
 
@@ -85,7 +84,7 @@ class FastAPIApp:
                 crud.db_status(self.database_manager)
 
                 if current_user is None:
-                    self.log.error("Authentication failed")
+                    self.log.info("Authentication failed")
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 getall_timer.stop()
@@ -94,11 +93,11 @@ class FastAPIApp:
                 return msg
 
             except HTTPException as exc:
-                self.log.error(f"HTTPException: {exc}")
+                self.log.info(f"HTTPException: {exc}")
                 raise exc  
 
             except Exception as e:
-                self.log.error(f"An error occurred: {str(e)}")
+                self.log.info(f"An error occurred: {str(e)}")
                 raise e
 
         @self.app.get("/v1/assignment", response_model=list[schemas.AssignmentCreate])
@@ -109,7 +108,7 @@ class FastAPIApp:
                 stats.incr('getAssignment')
                 # Check if the user is authenticated
                 if current_user is None:
-                    self.log.error("Authentication failed while getting assignment")
+                    self.log.info("Authentication failed while getting assignment")
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 # Get assignments created by the authenticated user
@@ -139,7 +138,7 @@ class FastAPIApp:
                 stats.incr('createAssignment')
                 
                 if current_user is None:
-                    self.log.error("Authentication failed for ",current_user.email)
+                    self.log.info("Authentication failed for ",current_user.email)
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 
@@ -147,7 +146,7 @@ class FastAPIApp:
 
                 
                 if not (1 <= assignment.points <= 10) or not (1 <= assignment.num_of_attempts <= 3):
-                    self.log.error("Invalid input data entered by ",current_user.email)
+                    self.log.info("Invalid input data entered by ",current_user.email)
                     raise HTTPException(
                         status_code=400,
                         detail="Points must be between 1 and 10, and num_of_attempts must be between 1 and 3"
@@ -176,7 +175,7 @@ class FastAPIApp:
                 stats.incr('updateAssignment')
                 # Check if the user is authenticated
                 if current_user is None:
-                    self.log.error("Authentication failed for ", current_user.email)
+                    self.log.info("Authentication failed for ", current_user.email)
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 # Check if the database is running
@@ -190,7 +189,7 @@ class FastAPIApp:
 
                 # Check if the assignment exists
                 if assignment_to_update is None:
-                    self.log.error("Assignment not found")
+                    self.log.info("Assignment not found")
                     raise HTTPException(status_code=401, detail="Assignment not found")
                 updated_assignment = crud.update_assignment(db, assignment_id, assignment_update)
                 self.log.info("Assignment updated")
@@ -215,7 +214,7 @@ class FastAPIApp:
                 stats.incr('deleteAssignment')
                 # Check if the user is authenticated
                 if current_user is None:
-                    self.log.error("Authentication failed for ",current_user.email)
+                    self.log.info("Authentication failed for ",current_user.email)
                     raise HTTPException(status_code=401, detail="Authentication failed")
 
                 # Check if the database is running
@@ -228,7 +227,7 @@ class FastAPIApp:
 
                 # Check if the assignment exists and if it was created by the user
                 if assignment_to_delete is None:
-                    self.log.error("Assignment not found")
+                    self.log.info("Assignment not found")
                     raise HTTPException(status_code=404, detail="Assignment not found")
 
                 # Delete the assignment
@@ -236,11 +235,11 @@ class FastAPIApp:
                 self.log.info("Assignment deleted")
 
             except HTTPException as exc:
-                self.log.error(f"HTTPException: {exc} while deleting")
+                self.log.info(f"HTTPException: {exc} while deleting")
                 raise exc  # Re-raise HTTPExceptions to maintain the original status code and detail
 
             except Exception as e:
-                self.log.error(f"An error occurred: {str(e)} while deleting")
+                self.log.info(f"An error occurred: {str(e)} while deleting")
                 raise HTTPException(status_code=503, detail="Database is not running")
 
 
