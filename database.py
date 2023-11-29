@@ -13,8 +13,8 @@ class DatabaseManager:
         script_directory = os.path.dirname(os.path.abspath(__file__))
         config_file = os.path.join(script_directory, config_path)
         self.config.read(config_file)
-        
-        if os.getenv("CreateAMI") == "true" or os.getenv("CI") == "true":
+        # os.environ["CreateAMI"] = "true"
+        if os.getenv("CreateAMI") == "true" or os.getenv("CI") == "true" or os.getenv("CSYE") == "true":
             username = self.config.get('DatabaseSection', 'database.user')
             pwd = self.config.get('DatabaseSection', 'database.password')
             endpoint= self.config.get('DatabaseSection', 'database.host')

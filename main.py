@@ -1,4 +1,6 @@
 import configparser
+from datetime import datetime
+
 from fastapi import FastAPI, Depends, HTTPException
 import models
 import schemas
@@ -16,9 +18,44 @@ from database import DatabaseManager
 import csv
 import os
 import statsd
+import boto3
 
 
 stats = statsd.StatsClient('127.0.0.1', 8125,prefix="app")
+
+sns_message = message = "Upload assignment"
+
+sns_attributes = ["release_code_file", "user_release", "tag", "from_email", "to_email", "submission_id"]
+
+attributes = {
+    'release_code_file': {
+        'DataType': 'String',
+        'StringValue': 'https://github.com/krishna295/python_colabs/blob/main/Computer_Fundamentals.ipynb'
+    },
+    'user_release': {
+        'DataType': 'String',
+        'StringValue': '2024'
+    },
+    'tag': {
+        'DataType': 'String',
+        'StringValue': 'Computer_Fundamentals.ipynb'
+    },
+    'from_email': {
+        'DataType': 'String',
+        'StringValue': 'no-reply@vyshnavi2024.me'
+    },
+    'to_email': {
+        'DataType': 'String',
+        'StringValue': 'vyshnavi.p108@gmail.com'
+    },
+    'submission_id': {
+        'DataType': 'String',
+        'StringValue': 'vyshnavip103232323223411'
+    }
+
+    
+}
+    
 
 class Hasher():
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -243,8 +280,106 @@ class FastAPIApp:
                 raise HTTPException(status_code=503, detail="Database is not running")
 
 
+        @self.app.post("/v1/assignments/{assignment_id}/submission", response_model=schemas.SubmissionResponse)
+        async def submit_assignment(
+            assignment_id: str,
+            submissions_update: schemas.SubmissionBase,          
+            db: Session = Depends(self.database_manager.get_db),
+            current_user: schemas.User = Depends(self.get_current_user)
+        ):
+            sns_client = boto3.client('sns')
+            ssm_client = boto3.client('ssm')
+            try:
+                stats.incr('submitAssignment')
+                # Check if the user is authenticated
+                if current_user is None:
+                    self.log.info("Authentication failed for ", current_user.email)
+                    raise HTTPException(status_code=401, detail="Authentication failed")
 
+                # Check if the database is running
+                crud.db_status(self.database_manager)
+                self.log.info(f'Uploading submission to assignment with id : {assignment_id} by {current_user.email}')
+                # get_assignment = crud.get_user_assignment_for_update(db, assignment_id, current_user.user_id)
+                
+                # Get the assignment from the database
+                get_assignment = crud.get_assignment(db, assignment_id)
 
+                # Get the existing assignment
+                # existing_assignment = crud.get_user_assignments(db, assignment_id)
+
+                # Check if the assignment exists
+                if get_assignment is None:
+                    self.log.info("Assignment not found")
+                    raise HTTPException(status_code=401, detail="Assignment not found")
+                
+                if crud.get_user_attempts(db, assignment_id, current_user.user_id) >= get_assignment.num_of_attempts:
+                    return responses.Response(status_code=400, content="You have exceeded the number of attempts for this assignment")
+                print(get_assignment.deadline)
+                print(datetime.now())
+                # Check if the deadline has passed
+                if datetime.now() > get_assignment.deadline:
+                    return responses.Response(status_code=400, content="The deadline for this assignment has passed")
+                # Save the submission to the database
+                created_submission = crud.create_submission(db, submissions_update, assignment_id, current_user.user_id)
+              
+                #buils sns message
+                sns_message = message = "Assignment submitted"
+                attributes = {
+                    'release_code_file': {
+                        'DataType': 'String',
+                        'StringValue': submissions_update.submission_url
+                    },
+                    'user_release': {
+                        'DataType': 'String',
+                        'StringValue': current_user.user_id
+                    },
+                    'tag': {
+                        'DataType': 'String',
+                        'StringValue': 'Computer_Fundamentals.ipynb'
+                    },
+                    'from_email': {
+                        'DataType': 'String',
+                        'StringValue': 'no-reply@vyshnavi2024.me'
+                    },
+                    'to_email': {
+                        'DataType': 'String',
+                        'StringValue': current_user.user_id
+                    },
+                    'submission_id': {
+                        'DataType': 'String',
+                        'StringValue': created_submission.id
+                    }
+
+                }
+                # attributes= attributes
+                # attributes = {}
+                # # attributes = {
+                # #     'release_code_file': {
+                # #         'DataType': 'String',
+                # #         'StringValue': '
+
+                # for  attribute in sns_attributes:
+                #     attributes[attribute] = {
+                #         'DataType': 'String',
+                #         'StringValue': str(getattr(created_submission, attribute))
+                #     }
+                sns_topic_arn= ssm_client.get_parameter(Name='csye_topic', WithDecryption=True)
+                print("SNS ARN: ", sns_topic_arn.get('Parameter').get('Value'))
+                response = sns_client.publish(
+                                    TopicArn=sns_topic_arn.get('Parameter').get('Value'),
+                                    Message=message,
+                                    MessageAttributes=attributes
+                                    )
+                # updated_assignment = crud.update_assignment(db, assignment_id, get_assignment)
+                self.log.info("Submission added ")
+
+                return created_submission
+            
+            except Exception as e:
+                print(e)
+                return responses.Response(status_code=503, content=e)
+
+    
     @staticmethod
     def get_password_hash(self, password):
         return Hasher.pwd_context.hash(password)
@@ -272,7 +407,7 @@ class FastAPIApp:
 
     def check_postgres_health(self):
         try:
-            if os.getenv("CreateAMI") == "true" or os.getenv("CI") == "true":
+            if os.getenv("CreateAMI") == "true" or os.getenv("CI") == "true" or os.getenv("CSYE") == "true":
                 conn = psycopg2.connect(
                     dbname=self.database_manager.config.get('DatabaseSection', 'database.dbname'),
                     port=self.database_manager.config.get('DatabaseSection', 'database.port'),

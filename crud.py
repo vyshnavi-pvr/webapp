@@ -1,4 +1,5 @@
 # Utils for CRUD
+from datetime import datetime
 from uuid import uuid4
 from fastapi import HTTPException
 from sqlalchemy import create_engine
@@ -72,7 +73,30 @@ def delete_assignment(db: Session, assignment_to_delete: models.Assignment):
     db.delete(assignment_to_delete)
     db.commit()
 
-    
+def get_assignment(db: Session, assignment_id: str):
+    return db.query(models.Assignment).filter(models.Assignment.assignment_id == assignment_id).first()
+
+def get_user_attempts(db: Session, assignment_id: str, user_id: str):
+    return db.query(models.UserAssignmentSubmission).filter(
+        models.UserAssignmentSubmission.assignment_id == assignment_id,
+        models.UserAssignmentSubmission.student_id == user_id
+    ).count()
+
+def create_submission(db: Session, submission: schemas.SubmissionBase, assignment_id: str, user_id: str):
+    db_submission = models.UserAssignmentSubmission(
+        assignment_id=assignment_id,
+        student_id=user_id,
+        submission_url=submission.submission_url,
+        submission_date=datetime.now(),
+        submission_updated=datetime.now(),
+        attempts= get_user_attempts(db, assignment_id, user_id) + 1
+        
+    )
+    db.add(db_submission)
+    db.commit()
+    db.refresh(db_submission)
+    return db_submission
+
 def db_status(dbManager):
     try:
         engine = create_engine(dbManager.db_uri)
