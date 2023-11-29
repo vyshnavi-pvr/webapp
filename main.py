@@ -287,8 +287,8 @@ class FastAPIApp:
             db: Session = Depends(self.database_manager.get_db),
             current_user: schemas.User = Depends(self.get_current_user)
         ):
-            sns_client = boto3.client('sns')
-            ssm_client = boto3.client('ssm')
+            sns_client = boto3.client('sns',region_name='us-east-1')
+            ssm_client = boto3.client('ssm',region_name='us-east-1')
             try:
                 stats.incr('submitAssignment')
                 # Check if the user is authenticated
