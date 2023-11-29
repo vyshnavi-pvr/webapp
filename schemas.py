@@ -46,6 +46,15 @@ class Assignment(AssignmentBase):
     u_id: str
     
 
+class SubmissionBase(BaseModel):
+    submission_url: str
+
+class SubmissionResponse(BaseModel):
+    id: str
+    assignment_id: str
+    submission_url: str
+    submission_date: datetime
+    submission_updated: datetime
     class Config:
         orm_mode = True
 

@@ -40,5 +40,19 @@ class Assignment(Base):
     u_id = Column(String(36), ForeignKey("webappdb.users_data.user_id"))
 
     users = relationship("User", back_populates="assignments")
+    submissions = relationship("UserAssignmentSubmission", back_populates="assignment", cascade="all, delete-orphan")
 
 
+class UserAssignmentSubmission(Base):
+    __tablename__ = "submission_data"
+    __table_args__ = {'schema': 'webappdb'}
+
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()), unique=True)
+    assignment_id = Column(String(36), ForeignKey("webappdb.assignment_data.assignment_id"), nullable=False)
+    student_id = Column(String(36), ForeignKey("webappdb.users_data.user_id"), nullable=False)
+    submission_url = Column(String(), nullable=False)  # Adjust the length based on your requirements
+    submission_date = Column(DateTime, nullable=False,default=func.now())
+    submission_updated = Column(DateTime, onupdate=func.now(), nullable=False)
+    attempts = Column(Integer, nullable=False, default=1)
+
+    assignment = relationship("Assignment", back_populates="submissions")
