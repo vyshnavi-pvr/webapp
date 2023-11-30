@@ -311,8 +311,8 @@ class FastAPIApp:
                 if get_assignment is None:
                     self.log.info("Assignment not found")
                     raise HTTPException(status_code=401, detail="Assignment not found")
-                
-                if crud.get_user_attempts(db, assignment_id, current_user.user_id) >= get_assignment.num_of_attempts:
+                attempt_count= crud.get_user_attempts(db, assignment_id, current_user.user_id)
+                if attempt_count >= get_assignment.num_of_attempts:
                     return responses.Response(status_code=400, content="You have exceeded the number of attempts for this assignment")
                 print(get_assignment.deadline)
                 print(datetime.now())
@@ -321,7 +321,7 @@ class FastAPIApp:
                     return responses.Response(status_code=400, content="The deadline for this assignment has passed")
                 # Save the submission to the database
                 created_submission = crud.create_submission(db, submissions_update, assignment_id, current_user.user_id)
-              
+                file_name = submissions_update.submission_url.split('/')[-1]
                 #buils sns message
                 sns_message = message = "Assignment submitted"
                 attributes = {
@@ -331,19 +331,19 @@ class FastAPIApp:
                     },
                     'user_release': {
                         'DataType': 'String',
-                        'StringValue': current_user.user_id
+                        'StringValue': f'{assignment_id}/{current_user.user_id}/{attempt_count}'
                     },
                     'tag': {
                         'DataType': 'String',
-                        'StringValue': 'Computer_Fundamentals.ipynb'
+                        'StringValue': file_name
                     },
                     'from_email': {
                         'DataType': 'String',
-                        'StringValue': 'no-reply@vyshnavi2024.me'
+                        'StringValue': 'pendru.v@gmail.com'
                     },
                     'to_email': {
                         'DataType': 'String',
-                        'StringValue': current_user.user_id
+                        'StringValue': current_user.email
                     },
                     'submission_id': {
                         'DataType': 'String',
@@ -363,7 +363,7 @@ class FastAPIApp:
                 #         'DataType': 'String',
                 #         'StringValue': str(getattr(created_submission, attribute))
                 #     }
-                sns_topic_arn= ssm_client.get_parameter(Name='csye_topic', WithDecryption=True)
+                sns_topic_arn= ssm_client.get_parameter(Name='csye_topic', WithDecryption=False)
                 print("SNS ARN: ", sns_topic_arn.get('Parameter').get('Value'))
                 response = sns_client.publish(
                                     TopicArn=sns_topic_arn.get('Parameter').get('Value'),
