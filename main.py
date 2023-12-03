@@ -108,7 +108,7 @@ class FastAPIApp:
                 return responses.Response(status_code=503, headers={"cache-control": "no-cache"})
 
 
-        @self.app.get("/v1/assignments", response_model=list[schemas.AssignmentCreate])
+        @self.app.get("/v2/assignments", response_model=list[schemas.AssignmentCreate])
         async def get_all_assignments(
                 db: Session = Depends(self.database_manager.get_db),
                 current_user: schemas.User = Depends(self.get_current_user)
@@ -137,7 +137,7 @@ class FastAPIApp:
                 self.log.info(f"An error occurred: {str(e)}")
                 raise e
 
-        @self.app.get("/v1/assignment", response_model=list[schemas.AssignmentCreate])
+        @self.app.get("/v2/assignment", response_model=list[schemas.AssignmentCreate])
         async def get_user_assignments(
                 db: Session = Depends(self.database_manager.get_db),
                 current_user: schemas.User = Depends(self.get_current_user)):
@@ -165,7 +165,7 @@ class FastAPIApp:
             except Exception as e:
                 raise HTTPException(status_code=503, detail="Database is not running")
         
-        @self.app.post("/v1/assignments", response_model=schemas.AssignmentCreate)
+        @self.app.post("/v2/assignments", response_model=schemas.AssignmentCreate)
         async def create_assignment(
             assignment: schemas.AssignmentBase,
             db: Session = Depends(self.database_manager.get_db),
@@ -201,7 +201,7 @@ class FastAPIApp:
             except Exception as e:
                 raise HTTPException(status_code=503, detail="Database is not running")
 
-        @self.app.put("/v1/assignments/{assignment_id}", response_model=schemas.AssignmentCreate)
+        @self.app.put("/v2/assignments/{assignment_id}", response_model=schemas.AssignmentCreate)
         async def update_assignment(
             assignment_id: str,
             assignment_update: schemas.AssignmentBase,
@@ -241,7 +241,7 @@ class FastAPIApp:
                 print(e)
                 raise HTTPException(status_code=503, detail="Database is not running")
 
-        @self.app.delete("/v1/assignments/{assignment_id}", status_code=204)
+        @self.app.delete("/v2/assignments/{assignment_id}", status_code=204)
         async def delete_assignment(
             assignment_id: str,
             db: Session = Depends(self.database_manager.get_db),
@@ -280,7 +280,7 @@ class FastAPIApp:
                 raise HTTPException(status_code=503, detail="Database is not running")
 
 
-        @self.app.post("/v1/assignments/{assignment_id}/submission", response_model=schemas.SubmissionResponse)
+        @self.app.post("/v2/assignments/{assignment_id}/submission", response_model=schemas.SubmissionResponse)
         async def submit_assignment(
             assignment_id: str,
             submissions_update: schemas.SubmissionBase,          
