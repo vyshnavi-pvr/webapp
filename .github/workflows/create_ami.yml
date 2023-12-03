@@ -99,9 +99,6 @@ jobs:
       run: |
         AWS_DEMO_AUTO_SCALING_GROUP=$(aws ssm get-parameter --name "AutoScalingGroupName" --query "Parameter.Value" --output text)
         REFRESH_ID=$(aws autoscaling start-instance-refresh --auto-scaling-group-name $AWS_DEMO_AUTO_SCALING_GROUP --query 'InstanceRefreshId' --output text)
-
-    - name: Wait for Instance Refresh
-      run: |
         while true; do
             STATUS=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name $AWS_DEMO_AUTO_SCALING_GROUP --instance-refresh-ids $REFRESH_ID --query 'InstanceRefreshes[0].Status' --output text)
             echo "Current status of the instance refresh: $STATUS"
