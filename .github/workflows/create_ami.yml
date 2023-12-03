@@ -93,7 +93,7 @@ jobs:
       run: |
         AWS_DEMO_LAUNCH_TEMPLATE=$(aws ssm get-parameter --name "LaunchTemplateId" --query "Parameter.Value" --output text)
         latest_ami_id=$(aws ec2 describe-images --filters "Name=name,Values=cye6225_2023_*" --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId' --output text)
-        aws ec2 create-launch-template-version --launch-template-id $AWS_DEMO_LAUNCH_TEMPLATE --source-version latest --version-description "Updated with latest AMI" --launch-template-data "{ \"imageId\": \"$latest_ami_id\" }"
+        aws ec2 create-launch-template-version --launch-template-id $AWS_DEMO_LAUNCH_TEMPLATE --source-version '$Latest' --version-description "Updated with latest AMI on github actions" --launch-template-data "{ \"ImageId\": \"$latest_ami_id\" }"
 
     - name: Issue Instance Refresh
       run: |
