@@ -93,19 +93,11 @@ jobs:
       run: |
         AWS_DEMO_LAUNCH_TEMPLATE=$(aws ssm get-parameter --name "LaunchTemplateId" --query "Parameter.Value" --output text)
         latest_ami_id=$(aws ec2 describe-images --filters "Name=name,Values=cye6225_2023_*" --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId' --output text)
-        aws ec2 create-launch-template-version --launch-template-id $AWS_DEMO_LAUNCH_TEMPLATE --source-version '$Latest' --version-description "Updated with latest AMI on github actions" --launch-template-data "{ \"ImageId\": \"$latest_ami_id\" }"
+        aws ec2 create-launch-template-version --launch-template-id $AWS_DEMO_LAUNCH_TEMPLATE --source-version '$Latest' --version-description "Updated with latest AMI from GiitHub Actions" --launch-template-data "{ \"ImageId\": \"$latest_ami_id\" }"
 
     - name: Issue Instance Refresh
       run: |
         AWS_DEMO_AUTO_SCALING_GROUP=$(aws ssm get-parameter --name "AutoScalingGroupName" --query "Parameter.Value" --output text)
-        REFRESH_ID=$(aws autoscaling start-instance-refresh --auto-scaling-group-name $AWS_DEMO_AUTO_SCALING_GROUP --query 'InstanceRefreshId' --output text)
-        while true; do
-            STATUS=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name $AWS_DEMO_AUTO_SCALING_GROUP --instance-refresh-ids $REFRESH_ID --query 'InstanceRefreshes[0].Status' --output text)
-            echo "Current status of the instance refresh: $STATUS"
-            if [[ "$STATUS" == "Successful" || "$STATUS" == "Failed" || "$STATUS" == "Cancelled" ]]; then
-                break
-            fi
-            
-            sleep 30
-        done
-        echo "Instance refresh completed with status: $STATUS"
+        aws autoscaling start-instance-refresh --auto-scaling-group-name $AWS_DEMO_AUTO_SCALING_GROUP
+
+
