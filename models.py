@@ -54,7 +54,7 @@ class UserAssignmentSubmission(Base):
     id = Column(String(36), primary_key=True, index=True,
                 default=lambda: str(uuid.uuid4()), unique=True)
     assignment_id = Column(String(36), ForeignKey(
-        "webappdb.assignment_data.assignment_id"), nullable=False)
+        "webappdb.assignment_data.assignment_id",ondelete='CASCADE'), nullable=False)
     student_id = Column(String(36), ForeignKey(
         "webappdb.users_data.user_id"), nullable=False)
  
