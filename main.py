@@ -210,7 +210,7 @@ class FastAPIApp:
                 # return updated_assignment
 
             except HTTPException as exc:
-                raise HTTPException(status_code=400, detail="Assignment not found")
+                raise HTTPException(status_code=404, detail="Assignment not found")
 
             except Exception as e:
                 print(e)
