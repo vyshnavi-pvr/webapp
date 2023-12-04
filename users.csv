@@ -1,9 +1,15 @@
 first_name,last_name,email,password
 john,doe,john.doe@example.com,abc123
 abc,abc,abc@gmail.com,abc
-shakamuri,nn,shakamuri.n@northeastern.edu,abc
-raushan,jha,jha.rau@northeastern.edu,abc
-sai,dogiparthi,dogiparthi.sai@northeastern.edu,abc
-shikha,singh,singh.shikha@northeastern.edu,abc
-vyshnavi,pen,pendru.v@northeastern.edu,abc
+Nagendra,Shakamuri,shakamuri.n@northeastern.edu,secret
+Raushan,Kumar,jha.rau@northeastern.edu,secret
+Sai Deepak,Dogiparthi,dogiparthi.sai@northeastern.edu,secret
+shikha,singh,singh.shikha@northeastern.edu,secret
+Souvik,Dinda,dinda.s@northeastern.edu,secret
+Rishab Rajesh,Agarwal,agarwal.risha@northeastern.edu,secret
+vyshnavi,Pendru,pendru.v@northeastern.edu,secret
+vyshnavi,reddy,pendru.v@gmail.com,secret
+vyshu,reddy,vyshnavi2402@gmail.com,secret
+
+
 
