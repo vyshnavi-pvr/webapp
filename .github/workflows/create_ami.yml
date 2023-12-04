@@ -101,5 +101,11 @@ jobs:
         REFRESH_ID=$(aws autoscaling start-instance-refresh --auto-scaling-group-name $AWS_DEMO_AUTO_SCALING_GROUP --query 'InstanceRefreshId' --output text)
         while true; do
             STATUS=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name $AWS_DEMO_AUTO_SCALING_GROUP --instance-refresh-ids $REFRESH_ID --query 'InstanceRefreshes[0].Status' --output text)
-
-
+            echo "Current status of the instance refresh: $STATUS"
+            if [[ "$STATUS" == "Successful" || "$STATUS" == "Failed" || "$STATUS" == "Cancelled" ]]; then
+                break
+            fi
+            
+            sleep 30
+        done
+        echo "Instance refresh completed with status: $STATUS"
