@@ -69,7 +69,7 @@ class FastAPIApp:
                 health_timer.stop()
                 return responses.Response(status_code=503, headers={"cache-control": "no-cache"})
 
-        @self.app.get("/v1/assignments", response_model=list[schemas.AssignmentCreate])
+        @self.app.get("/v3/assignments", response_model=list[schemas.AssignmentCreate])
         async def get_all_assignments(
                 db: Session = Depends(self.database_manager.get_db),
                 current_user: schemas.User = Depends(self.get_current_user)
@@ -99,7 +99,7 @@ class FastAPIApp:
                 self.log.info(f"An error occurred: {str(e)}")
                 raise HTTPException(status_code=503, detail="Database not found")
 
-        @self.app.get("/v1/assignment/{assignment_id}", response_model=schemas.AssignmentCreate)
+        @self.app.get("/v3/assignment/{assignment_id}", response_model=schemas.AssignmentCreate)
         async def get_user_assignments(
                 assignment_id: str,
                 db: Session = Depends(self.database_manager.get_db),
@@ -136,7 +136,7 @@ class FastAPIApp:
                 raise HTTPException(
                     status_code=400, detail="Not Found")
 
-        @self.app.post("/v1/assignments", response_model=schemas.AssignmentCreate,status_code=201)
+        @self.app.post("/v3/assignments", response_model=schemas.AssignmentCreate,status_code=201)
         async def create_assignment(
             assignment: schemas.AssignmentBase,
             db: Session = Depends(self.database_manager.get_db),
@@ -172,7 +172,7 @@ class FastAPIApp:
                 raise HTTPException(
                     status_code=400, detail="Not Found")
 
-        @self.app.put("/v1/assignments/{assignment_id}",  status_code=204)
+        @self.app.put("/v3/assignments/{assignment_id}",  status_code=204)
         async def update_assignment(
             assignment_id: str,
             assignment_update: schemas.AssignmentBase,
@@ -217,7 +217,7 @@ class FastAPIApp:
                 raise HTTPException(
                     status_code=400, detail="Not Found")
 
-        @self.app.delete("/v1/assignments/{assignment_id}", status_code=204)
+        @self.app.delete("/v3/assignments/{assignment_id}", status_code=204)
         async def delete_assignment(
             assignment_id: str,
             db: Session = Depends(self.database_manager.get_db),
@@ -259,7 +259,7 @@ class FastAPIApp:
                 raise HTTPException(
                     status_code=503, detail="Database is not running")
 
-        @self.app.post("/v1/assignments/{assignment_id}/submission", response_model=schemas.SubmissionResponse,status_code=201)
+        @self.app.post("/v3/assignments/{assignment_id}/submission", response_model=schemas.SubmissionResponse,status_code=201)
         async def submit_assignment(
             assignment_id: str,
             submissions_update: schemas.SubmissionBase,
