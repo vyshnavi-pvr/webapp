@@ -134,7 +134,7 @@ class FastAPIApp:
             except Exception as e:
                 print(e)
                 raise HTTPException(
-                    status_code=503, detail="Database is not running")
+                    status_code=400, detail="Not Found")
 
         @self.app.post("/v2/assignments", response_model=schemas.AssignmentCreate,status_code=201)
         async def create_assignment(
@@ -170,7 +170,7 @@ class FastAPIApp:
 
             except Exception as e:
                 raise HTTPException(
-                    status_code=503, detail="Database is not running")
+                    status_code=400, detail="Not Found")
 
         @self.app.put("/v2/assignments/{assignment_id}",  status_code=204)
         async def update_assignment(
@@ -215,7 +215,7 @@ class FastAPIApp:
             except Exception as e:
                 print(e)
                 raise HTTPException(
-                    status_code=503, detail="Database is not running")
+                    status_code=400, detail="Not Found")
 
         @self.app.delete("/v2/assignments/{assignment_id}", status_code=204)
         async def delete_assignment(
@@ -369,7 +369,7 @@ class FastAPIApp:
 
             except Exception as e:
                 print(e)
-                return responses.Response(status_code=503, content="Database Error")
+                return responses.Response(status_code=400, content="Not Found")
 
     @staticmethod
     def get_password_hash(self, password):
